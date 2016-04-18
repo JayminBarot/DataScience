@@ -1,4 +1,4 @@
-  pollutantmean <- function (directory, pollutant,id =a:332)
+  pollutantmean <- function (directory, pollutant,id =1:332)
     {
     sourcepath<- paste0(getwd(),"/",directory,collapse = " ")
       all_files <- list.files(sourcepath, full.names = TRUE)
