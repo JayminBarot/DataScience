@@ -45,7 +45,7 @@ strom_data <- read.csv("repdata-data-StormData.csv", stringsAsFactors = FALSE, s
 ### Quick look on storm data.
 ```{r,echo=TRUE}
 head(strom_data)
-summary(strom_data)
+
 ```
 ###Cleaning the data and getting only the one related to our study.
 
@@ -74,4 +74,34 @@ ggplot(head(topharms),aes(EVTYPE,HarmtoHealth,fill= EVTYPE)) +geom_bar(stat="ide
 ```
 
 
+2 Across the United States, which types of events have the greatest economic consequences?
 
+```{r,echo=TRUE}
+# we have denominator for the cost on this EXP fields as per doc explanation.
+unique(analysis_strom_data$PROPDMGEXP)
+unique(analysis_strom_data$CROPDMGEXP)
+
+```
+
+### Lets multiply the denominator to actual values
+```{r,echo=TRUE}
+
+library(plyr)
+Prop_Damage <- mapvalues(analysis_strom_data$PROPDMGEXP,
+c("K","M","", "B","m","+","0","5","6","?","4","2","3","h","7","H","-","1","8"), 
+c(1e3,1e6, 1, 1e9,1e6,  1,  1,1e5,1e6,  1,1e4,1e2,1e3,  1,1e7,1e2,  1, 10,1e8))
+
+Crop_Damage <- mapvalues(analysis_strom_data$CROPDMGEXP,
+c("","M","K","m","B","?","0","k","2"),
+c( 1,1e6,1e3,1e6,1e9,1,1,1e3,1e2))
+
+analysis_strom_data$total_Property_damage <- as.numeric(Prop_Damage) * analysis_strom_data$PROPDMG
+analysis_strom_data$total_crop_damage <- as.numeric(Crop_Damage) * analysis_strom_data$CROPDMG
+
+analysis_strom_data$total_damage <- analysis_strom_data$total_Property_damage + analysis_strom_data$total_crop_damage
+ggplot(head(topfdmg),aes(EVTYPE,total_damage,fill= EVTYPE)) +geom_bar(stat="identity") +labs(fill = "Strom Event Type") + ggtitle("Event wise financial loss.") +xlab("Events") + ylab("Damage in USD $")
+
+
+```
+
+### Thank you!
