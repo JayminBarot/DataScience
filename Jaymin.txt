@@ -1,1 +1,77 @@
-A first test file
+# Storm Data Analysis based on Data from NOAA 
+## Author :- Jaymin Barot
+## Date :- 05/18/2016
+
+Synopsis : 
+
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+
+This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
+
+We are trying to  analyses NOAA storm database with intention to  address 
+a) Types of events which are most harmful with respect to population health.
+b) Events that have the greatest economic consequences.
+
+## Data Processing
+
+The following processing has been performed on the data prior to analysis:
+- Uncompress the zip file in the working directory
+- Keep only relevant columns (event type and damages)
+- Clean and recode the two columns containing multipliers to calculate total amounts in dollar
+- Summarize data: calculate sum of damages by event type
+- Order the data, and keep only the top 20 types contributing to the each damageProcess
+
+### Loading Library
+```{r,echo=TRUE}
+library(plyr)
+library(knitr)
+library(ggplot2)
+library(grid)
+
+```
+### Loading file 
+
+```{r,echo=TRUE}
+setwd("C:/Jaymin")
+if(!file.exists("repdata-data-StormData.csv")){
+  url<-"https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+  download.file(url = url,destfile = "./repdata-data-StormData.csv" )
+  
+}
+strom_data <- read.csv("repdata-data-StormData.csv", stringsAsFactors = FALSE, strip.white=TRUE, header=TRUE)
+
+```
+
+### Quick look on storm data.
+```{r,echo=TRUE}
+head(strom_data)
+summary(strom_data)
+```
+###Cleaning the data and getting only the one related to our study.
+
+```{r,echo=TRUE}
+
+analysis_strom_data <- strom_data[ , c("EVTYPE", "BGN_DATE", "FATALITIES", "INJURIES", "PROPDMG", "PROPDMGEXP", "CROPDMG", "CROPDMGEXP")]
+str(analysis_strom_data)
+
+```
+
+###Fixing some data types.
+
+analysis_strom_data$BGN_DATE <- as.POSIXct(analysis_strom_data$BGN_DATE,format="%m/%d/%Y %H:%M:%S")
+
+1. Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+a sum of FATALITIES + INJURIES will help us determine the total health releted harms caused by various events
+
+
+```{r,echo=TRUE}
+
+casualties <- with(analysis_strom_data, aggregate(INJURIES + FATALITIES ~ EVTYPE, data=analysis_strom_data, FUN = "sum"))
+names(casualties)[2] <- "HarmtoHealth"
+
+topharms <- casualties[order(-casualties$HarmtoHealth),]
+ggplot(head(topharms),aes(EVTYPE,HarmtoHealth,fill= EVTYPE)) +geom_bar(stat="identity") +labs(fill = "Strom Event Type") + ggtitle("Event wise casuaities.") +xlab("Events") + ylab("Casuality")
+```
+
+
+
